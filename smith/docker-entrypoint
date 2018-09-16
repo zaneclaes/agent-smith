@@ -1,0 +1,9 @@
+#!/bin/bash
+mkdir -p /root/.cache/unity3d
+mkdir -p /root/.local/share/unity3d/Unity/
+cat /ss3/unity.ulf | tr -d '\r' > /root/.local/share/unity3d/Unity/Unity_lic.ulf
+
+cmd="$@"
+
+echo "Smith awaiting commands."
+tail -f /dev/null

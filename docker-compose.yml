@@ -1,0 +1,61 @@
+version: '3.3'
+
+networks:
+  smithnet: {}
+
+services:
+  smith:
+    container_name: smith
+    image: inzania/smith:latest
+    build:
+      context: ./smith
+    networks:
+      smithnet:
+        aliases:
+          - smith
+    environment:
+      - MG_ENV=${MG_ENV:-DEV}
+      - MG_SHR=${MG_SHR}
+      - AWS_KEY_ID=${AWS_KEY_ID}
+      - AWS_KEY_SEC=${AWS_KEY_SEC}
+      - BUILDKITE_BUILD_NUMBER
+      - BUILDKITE_JOB_ID
+      - "BUILDKITE_AGENT_TAGS=queue=default"
+      - WORKDIR=/buildkite
+    working_dir: /buildkite
+    volumes:
+      - $HOME/.ssh:/root/ssh
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${MG_SHR}/builds:/buildkite/builds
+      - type: bind
+        read_only: true
+        source: ${MG_SHR}/.ss3/
+        target: /ss3/
+
+  agent:
+    container_name: agent
+    image: inzania/agent:latest
+    build:
+      context: ./agent
+    networks:
+      smithnet:
+        aliases:
+          - agent
+    environment:
+      - MG_ENV=${MG_ENV:-DEV}
+      - MG_SHR=${MG_SHR}
+      - AWS_KEY_ID=${AWS_KEY_ID}
+      - AWS_KEY_SEC=${AWS_KEY_SEC}
+      - BUILDKITE_AGENT_NAME
+      - BUILDKITE_BUILD_NUMBER
+      - BUILDKITE_JOB_ID
+      - "BUILDKITE_AGENT_TAGS=queue=default"
+    volumes:
+      - $HOME/.ssh/docker-credential-ecr-login:/usr/local/bin/docker-credential-ecr-login
+      - $HOME/.ssh:/root/ssh
+      - ${MG_SHR}/builds:/buildkite/builds
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        read_only: true
+        source: ${MG_SHR}/.ss3/
+        target: /ss3/
