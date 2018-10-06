@@ -24,8 +24,6 @@ chmod 400 /root/.ssh/id_rsa
 
 at=$(cat $atf)
 echo "Configuring as BuildKite Agent"
-# AWS_KEY_ID=${AWS_KEY_ID:-$(cat /ss3/aws_key_id)}
-# AWS_KEY_SEC=${AWS_KEY_SEC:-$(cat /ss3/aws_key_sec)}
 
 #if [[ ! -d /etc/buildkite-agent/ ]]; then mkdir /etc/buildkite-agent/; fi
 #cat /tmp/buildkite-agent.cfg >> /etc/buildkite-agent/buildkite-agent.cfg

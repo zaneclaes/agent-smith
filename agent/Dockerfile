@@ -3,6 +3,11 @@ FROM buildkite/agent:ubuntu
 USER root
 COPY ./buildkite-agent.cfg /etc/buildkite-agent/buildkite-agent.cfg
 
+# BUILDPIPE
+# https://github.com/ksindi/buildpipe
+RUN apt-get update && apt-get install -y python3 python3-pip
+RUN pip3 install buildpipe awscli
+
 # BAZEL
 # https://docs.bazel.build/versions/master/install-ubuntu.html
 RUN apt-get update &&\
@@ -13,6 +18,8 @@ RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8
     curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
 
 RUN apt-get update && apt-get install -y bazel
+
+RUN apt-get install -y zip unzip curl jq
 
 # ENTRYPOINT
 # n.b. buildkite base doesn't like the entrypoint to be overridden.

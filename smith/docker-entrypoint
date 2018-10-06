@@ -1,9 +1,36 @@
 #!/bin/bash
 mkdir -p /root/.cache/unity3d
 mkdir -p /root/.local/share/unity3d/Unity/
-cat /ss3/unity.ulf | tr -d '\r' > /root/.local/share/unity3d/Unity/Unity_lic.ulf
 
-cmd="$@"
+if [[ ! -z "$UNITY_LIC_ULF" ]]; then
+  echo "$UNITY_LIC_ULF" > /root/.local/share/unity3d/Unity/Unity_lic.ulf
+elif [[ -f /ss3/unity.ulf ]]; then
+  cat /ss3/unity.ulf | tr -d '\r' > /root/.local/share/unity3d/Unity/Unity_lic.ulf
+fi
 
-echo "Smith awaiting commands."
-tail -f /dev/null
+if [[ ! -f /root/.local/share/unity3d/Unity/Unity_lic.ulf ]]; then
+  echo "No licence file!"
+  exit 1
+fi
+
+if [[ ! -d work ]]; then
+  mkdir work
+fi
+
+if [[ ! -d cache ]]; then
+  mkdir cache
+fi
+
+# echo "Smith awaiting lazy-start by agent."
+# tail -f /dev/null
+cd work
+lf="ci.log"
+rm -rf "$lf"
+echo "Running as $(whoami) w/ logs $lf in $(pwd) using ${SMITH_TARGET}"
+xvfb-run --auto-servernum --server-args='-screen 0 640x480x24' \
+  /opt/Unity/Editor/Unity -nographics \
+   -projectPath ./ -logFile $lf \
+  -batchmode -quit \
+  -androidSdkRoot /root/Android \
+  -JdkPath /usr/lib/jvm/java-8-oracle \
+  -executeMethod Agent.Smith.CI

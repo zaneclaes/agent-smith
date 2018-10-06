@@ -7,8 +7,6 @@ if [[ -z "$MG_SHR" ]]; then
   exit 1
 fi
 
-aws ecr get-login --no-include-email > ${MG_SHR}/.ss3/ecr_login
-
 # # MG_SRC, MG_SHR, MG_ENV, SN
 # cat ./docker-compose.template > ./docker-compose.yml
 # fn="./docker-compose.yml"
@@ -17,7 +15,11 @@ aws ecr get-login --no-include-email > ${MG_SHR}/.ss3/ecr_login
 # echo "$smith" | sed "s/{SN}/1/"  >> $fn
 
 dc() {
-  MG_ENV="$mg_env" BUILDKITE_AGENT_NAME="agent_smith-$HOSTNAME" docker-compose $@
+  MG_ENV="$mg_env" \
+    BUILDKITE_ARTIFACT_UPLOAD_DESTINATION="s3://mg-buildkite-artifacts/${BUILDKITE_JOB_ID}" \
+    BUILDKITE_AGENT_NAME="agent_smith-$HOSTNAME" \
+    BUILDKITE_S3_DEFAULT_REGION="us-east-1" \
+    docker-compose $@
 }
 
 dc stop
