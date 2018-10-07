@@ -12,12 +12,12 @@ fi
 ws="/ws_${targ}"
 rm -rf "${ws}/*"
 if [[ ! -d "$ws" ]]; then mkdir "$ws"; fi
-echo "Copying $proj/ to $ws"
-cp -fuR "${proj}/" "${ws}"
+echo "Syncing $proj/ to $ws"
+rsync --archive --delete "${proj}" "${ws}/"
 
 if [[ ! -z "$cache" ]]; then
-  echo "Copying library from $cache/${targ}/Library"
-  cp -fuR "$cache/${targ}/Library/" "${ws}/Library"
+  echo "Syncing library from $cache/${targ}/Library"
+  rsync --archive --delete "$cache/${targ}/Library/" "${ws}"
 fi
 
 cd "${ws}"
