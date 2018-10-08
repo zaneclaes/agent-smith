@@ -4,36 +4,6 @@ networks:
   smithnet: {}
 
 services:
-  smith:
-    container_name: smith
-    image: inzania/smith:latest
-    build:
-      context: ./smith
-    networks:
-      smithnet:
-        aliases:
-          - smith
-    environment:
-      - MG_ENV=${MG_ENV:-DEV}
-      - MG_SHR=${MG_SHR}
-      - AWS_KEY_ID=${AWS_KEY_ID}
-      - AWS_KEY_SEC=${AWS_KEY_SEC}
-      - BUILDKITE_BUILD_NUMBER
-      - BUILDKITE_JOB_ID
-      - ANDROID_SDK_ROOT=/root/Android
-      - "BUILDKITE_AGENT_TAGS=queue=default"
-      - WORKDIR=/smith
-    working_dir: /smith
-    volumes:
-      - $HOME/.ssh:/root/ssh
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ${MG_SHR}/builds:/buildkite/builds
-      - ${MG_SHR}/smith:/smith
-      - type: bind
-        read_only: true
-        source: ${MG_SHR}/.ss3/
-        target: /ss3/
-
   agent:
     container_name: agent
     image: inzania/agent:latest
