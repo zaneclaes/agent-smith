@@ -25,14 +25,8 @@ RUN apt-get install -y zip unzip curl jq
 RUN apt-get update -y && apt-get install -y git cmake ninja-build libpng-dev zlib1g-dev libxml2-dev pkg-config
 RUN git clone https://github.com/facebook/xcbuild && cd xcbuild && git submodule update --init && make -j 8 && cp -a build/. /usr/bin/
 
-# ENTRYPOINT
-# n.b. buildkite base doesn't like the entrypoint to be overridden.
-# https://hub.docker.com/r/buildkite/agent/
 RUN mkdir /root/.ssh/
 ADD hooks /buildkite/hooks
-COPY ./docker-entrypoint.d /docker-entrypoint.d
-RUN chmod +x /docker-entrypoint.d/agent
-RUN chmod +x /docker-entrypoint.d/smith
 RUN git config --global core.autocrlf input # For Windows agents.
 RUN git config --global core.sparseCheckout true # Faster, and also helps Windows agents.
 
@@ -130,13 +124,23 @@ RUN /root/Android/tools/bin/sdkmanager --update && \
     echo 'y' | /root/Android/tools/bin/sdkmanager "platforms;android-27" "build-tools;27.0.3" "extras;google;m2repository" "extras;android;m2repository" && \
     yes | /root/Android/tools/bin/sdkmanager --licenses
 
+# cocoapods, for iOS builds
+RUN apt-get install -y ruby-dev
+RUN gem install -n /usr/local/bin cocoapods
+
 # Clean up
 RUN rm -rf /tmp/* /var/tmp/*
 
+# ENTRYPOINT
+# n.b. buildkite base doesn't like the entrypoint to be overridden.
+# https://hub.docker.com/r/buildkite/agent/
+COPY ./docker-entrypoint.d /docker-entrypoint.d
+RUN chmod +x /docker-entrypoint.d/agent
+RUN chmod +x /docker-entrypoint.d/smith
 #COPY ./docker-entrypoint /usr/local/bin/docker-entrypoint
 #RUN chmod +x /usr/local/bin/docker-entrypoint
 #COPY ./unity_run.sh /bin/unity_run.sh
 #RUN chmod +x /bin/unity_run.sh
-COPY ./ci.sh /bin/ci.sh
-RUN chmod +x /bin/ci.sh
+#COPY ./ci.sh /bin/ci.sh
+#RUN chmod +x /bin/ci.sh
 #ENTRYPOINT ["/usr/local/bin/docker-entrypoint"]
