@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-mg_env=${MG_ENV:-DEV}
-
 if [[ -z "$MG_SHR" ]]; then
   echo "No MG_SHR env var"
   exit 1
@@ -14,14 +12,16 @@ fi
 # cp ./docker-compose.template $fn
 # echo "$smith" | sed "s/{SN}/1/"  >> $fn
 
-dc() {
-  MG_ENV="$mg_env" \
-    BUILDKITE_ARTIFACT_UPLOAD_DESTINATION="s3://mg-buildkite-artifacts/${BUILDKITE_JOB_ID}" \
-    BUILDKITE_AGENT_NAME="agent_smith-$HOSTNAME" \
-    BUILDKITE_S3_DEFAULT_REGION="us-east-1" \
-    docker-compose $@
-}
+df="docker-compose.yml"
 
-dc stop
-dc build
-dc up
+docker-compose stop || true
+
+echo "version: '3.3'" > "$df"
+echo "services:" >> "$df"
+
+for smith_target in "$@"; do
+  cat "agent.yml" >> "$df"
+  sed -i "s/{{SMITH_TARGET}}/${smith_target}/g" "$df"
+done
+
+docker-compose up

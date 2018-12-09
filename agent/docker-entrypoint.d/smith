@@ -21,23 +21,7 @@ if [[ ! -f /root/.local/share/unity3d/Unity/Unity_lic.ulf ]]; then
   exit 1
 fi
 
-mkdir -p work
-mkdir -p cache
+#mkdir -p work
+#mkdir -p cache
 
-# echo "Smith awaiting lazy-start by agent."
-# tail -f /dev/null
-cd work
-lf="ci.log"
-rm -rf "$lf"
-rm -rf "smith.lock" # In case the prior version did not shut down.
-rm -rf "smith.cmd" # In case the prior version did not shut down.
-echo "[Smith] Running as $(whoami) in $(pwd) [$lf]"
-xvfb-run --auto-servernum --server-args='-screen 0 640x480x24' /opt/Unity/Editor/Unity \
-  -nographics \
-  -batchmode \
-  -quit \
-  -projectPath ./ \
-  -logFile "$lf" \
-  -androidSdkRoot /root/Android \
-  -JdkPath /usr/lib/jvm/java-8-oracle \
-  -executeMethod Agent.Smith.CI &
+/bin/smith.sh

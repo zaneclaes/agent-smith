@@ -1,7 +1,6 @@
 # BUILDKITE BASE
 FROM buildkite/agent:ubuntu
 USER root
-COPY ./buildkite-agent.cfg /etc/buildkite-agent/buildkite-agent.cfg
 
 # BUILDPIPE
 # https://github.com/ksindi/buildpipe
@@ -26,7 +25,6 @@ RUN apt-get update -y && apt-get install -y git cmake ninja-build libpng-dev zli
 RUN git clone https://github.com/facebook/xcbuild && cd xcbuild && git submodule update --init && make -j 8 && cp -a build/. /usr/bin/
 
 RUN mkdir /root/.ssh/
-ADD hooks /buildkite/hooks
 RUN git config --global core.autocrlf input # For Windows agents.
 RUN git config --global core.sparseCheckout true # Faster, and also helps Windows agents.
 
@@ -34,10 +32,13 @@ RUN git config --global core.sparseCheckout true # Faster, and also helps Window
 # ----------- UNITY -----------
 # -----------------------------
 
+# cocoapods, for iOS builds
+RUN apt-get install -y ruby-dev
+RUN gem install -n /usr/local/bin cocoapods
+
 # FROM: https://forum.unity.com/threads/unity-on-linux-release-notes-and-known-issues.350256/page-2
 # Steal the SHA from "Linux Download Assistant"
-ARG DOWNLOAD_URL="https://beta.unity3d.com/download/793261fe3e9a/UnitySetup-2018.2.6f1"
-ARG COMPONENTS=Unity,Windows,Windows-Mono,Mac,Mac-Mono,WebGL,Android,iOS
+ARG COMPONENTS=Unity,Windows-Mono,Mac-Mono,WebGL,Android,iOS
 
 RUN apt-get update -qq; \
     apt-get install -qq -y \
@@ -87,7 +88,24 @@ RUN apt-get update -qq; \
     xvfb \
     wget \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*    
+
+# Android Support: Add JDK & ADK
+# From: Command Line Tools Only: https://developer.android.com/studio/#downloads
+RUN apt-get update && apt-get install -y software-properties-common
+RUN echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
+RUN echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections
+RUN add-apt-repository ppa:webupd8team/java && apt-get update && yes | apt-get install -y oracle-java8-installer
+RUN apt-get update && apt-get install -y zip unzip lib32ncurses5 lib32stdc++6
+RUN wget -O android-sdk.zip https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
+RUN unzip android-sdk.zip -d /root/Android
+RUN chmod -R +xr /root/Android/
+RUN mkdir /root/.android || true && touch /root/.android/repositories.cfg
+RUN /root/Android/tools/bin/sdkmanager --update && \
+    echo 'y' | /root/Android/tools/bin/sdkmanager "platforms;android-27" "build-tools;27.0.3" "extras;google;m2repository" "extras;android;m2repository" && \
+    yes | /root/Android/tools/bin/sdkmanager --licenses
+
+ARG DOWNLOAD_URL="https://beta.unity3d.com/download/dad990bf2728/UnitySetup-2018.2.7f1"
 
 RUN wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
     # compare sha1 if given
@@ -109,38 +127,16 @@ RUN wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
     # remove setup
     rm UnitySetup
 
-# Android Support: Add JDK & ADK
-# From: Command Line Tools Only: https://developer.android.com/studio/#downloads
-RUN apt-get update && apt-get install -y software-properties-common
-RUN echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
-RUN echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections
-RUN add-apt-repository ppa:webupd8team/java && apt-get update && yes | apt-get install -y oracle-java8-installer
-RUN apt-get update && apt-get install -y zip unzip lib32ncurses5 lib32stdc++6
-RUN wget -O android-sdk.zip https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
-RUN unzip android-sdk.zip -d /root/Android
-RUN chmod -R +xr /root/Android/
-RUN mkdir /root/.android || true && touch /root/.android/repositories.cfg
-RUN /root/Android/tools/bin/sdkmanager --update && \
-    echo 'y' | /root/Android/tools/bin/sdkmanager "platforms;android-27" "build-tools;27.0.3" "extras;google;m2repository" "extras;android;m2repository" && \
-    yes | /root/Android/tools/bin/sdkmanager --licenses
-
-# cocoapods, for iOS builds
-RUN apt-get install -y ruby-dev
-RUN gem install -n /usr/local/bin cocoapods
-
 # Clean up
 RUN rm -rf /tmp/* /var/tmp/*
 
-# ENTRYPOINT
-# n.b. buildkite base doesn't like the entrypoint to be overridden.
-# https://hub.docker.com/r/buildkite/agent/
+# ENTRYPOINT hooks
+ADD hooks /buildkite/hooks/
+RUN chmod -R +x /buildkite/hooks
+
+COPY ./buildkite-agent.cfg /etc/buildkite-agent/buildkite-agent.cfg
 COPY ./docker-entrypoint.d /docker-entrypoint.d
-RUN chmod +x /docker-entrypoint.d/agent
-RUN chmod +x /docker-entrypoint.d/smith
-#COPY ./docker-entrypoint /usr/local/bin/docker-entrypoint
-#RUN chmod +x /usr/local/bin/docker-entrypoint
-#COPY ./unity_run.sh /bin/unity_run.sh
-#RUN chmod +x /bin/unity_run.sh
-#COPY ./ci.sh /bin/ci.sh
-#RUN chmod +x /bin/ci.sh
-#ENTRYPOINT ["/usr/local/bin/docker-entrypoint"]
+RUN chmod -R +x /docker-entrypoint.d
+
+COPY ./smith.sh /bin/smith.sh
+RUN chmod +x /bin/smith.sh
