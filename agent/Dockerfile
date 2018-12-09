@@ -130,10 +130,11 @@ RUN wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
 # Clean up
 RUN rm -rf /tmp/* /var/tmp/*
 
-# ENTRYPOINT hooks
-ADD hooks /buildkite/hooks/
-RUN chmod -R +x /buildkite/hooks
+# Hooks
+COPY ./hooks /etc/buildkite-agent/hooks
+RUN chmod -R +x /etc/buildkite-agent/hooks
 
+# Agent config
 COPY ./buildkite-agent.cfg /etc/buildkite-agent/buildkite-agent.cfg
 COPY ./docker-entrypoint.d /docker-entrypoint.d
 RUN chmod -R +x /docker-entrypoint.d

@@ -24,4 +24,4 @@ for smith_target in "$@"; do
   sed -i "s/{{SMITH_TARGET}}/${smith_target}/g" "$df"
 done
 
-docker-compose up
+docker-compose up --build

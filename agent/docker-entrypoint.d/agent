@@ -37,4 +37,4 @@ sed -i "s/{{SMITH_TARGET}}/${SMITH_TARGET}/g" "$ba"
 chmod +rwx "$ba"
 
 mkdir -p /buildkite/builds
-echo "[Agent] Hooks: $(ls /buildkite/hooks)"
+echo "[Agent] Hooks: $(ls /etc/buildkite-agent/hooks)"
