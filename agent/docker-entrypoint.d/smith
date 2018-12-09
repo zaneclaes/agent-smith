@@ -12,12 +12,12 @@ mkdir -p /root/.local/share/unity3d/Unity/
 if [[ ! -z "$UNITY_LIC_ULF" ]]; then
   echo "$UNITY_LIC_ULF" > /root/.local/share/unity3d/Unity/Unity_lic.ulf
 elif [[ -f /ss3/unity.ulf ]]; then
-  echo "Copying license from SS3"
+  echo "[Smith] Copying license from SS3"
   cat /ss3/unity.ulf | tr -d '\r' > /root/.local/share/unity3d/Unity/Unity_lic.ulf
 fi
 
 if [[ ! -f /root/.local/share/unity3d/Unity/Unity_lic.ulf ]]; then
-  echo "No licence file!"
+  echo "[Smith] No licence file!"
   exit 1
 fi
 

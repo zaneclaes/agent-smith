@@ -1,5 +1,12 @@
 #!/bin/bash
-set -euo pipefail
+
+echo "[Smith] checking that Unity is running"
+running=$(ps -ef | grep "/opt/Unity/Editor/Unity" | grep -v "grep")
+echo "[Smith] Running? ${running}"
+if [[ ! -z "$running" ]]; then
+  echo "[Smith] Unity is already running."
+  exit 0
+fi
 
 cd "/smith"
 lf="ci.log"
