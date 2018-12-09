@@ -2,7 +2,7 @@
 set -euo
 echo "[Agent] start."
 
-src_id_rsa="/root/ssh/id_rsa"
+src_id_rsa="/ss3/id_rsa"
 src_dckr="/ss3/docker-credential-ecr-login"
 
 atf="/ss3/buildkite_agent_token"
