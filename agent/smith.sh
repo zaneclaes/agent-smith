@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ -z "$SMITH_TARGET" ]]; then
+  echo "[Smith] no target; not starting Unity."
+  exit 0
+fi
+
 echo "[Smith] checking that Unity is running"
 running=$(ps -ef | grep "/opt/Unity/Editor/Unity" | grep -v "grep")
 echo "[Smith] Running? ${running}"
@@ -10,6 +15,7 @@ fi
 
 cd "/smith"
 lf="ci.log"
+rm -rf 
 rm -rf "$lf"
 rm -rf "smith.lock" # In case the prior version did not shut down.
 rm -rf "smith.cmd" # In case the prior version did not shut down.

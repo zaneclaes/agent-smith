@@ -1,8 +1,6 @@
-  agent:
-    container_name: agent
+  smith_{{SMITH_TARGET}}:
+    container_name: smith_{{SMITH_TARGET}}
     image: inzania/agent:latest
-    build:
-      context: ./agent
     environment:
       - MG_SHR=${MG_SHR}
       - BUILDKITE_S3_ACL=${S3_ACL:-private}
@@ -13,11 +11,10 @@
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
-      - STAGING_ENV=${STAGING_ENV:-DEV}
-      - SMITH_TARGET=
+      - SMITH_TARGET={{SMITH_TARGET}}
     volumes:
       - ${MG_SHR}/builds:/buildkite/builds
-      - ${MG_SHR}/${STAGING_ENV:-DEV}:/staging
+      - ${MG_SHR}/smith-{{SMITH_TARGET}}:/smith
       - /var/run/docker.sock:/var/run/docker.sock
       - type: bind
         read_only: true

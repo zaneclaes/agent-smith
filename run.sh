@@ -19,8 +19,10 @@ docker-compose stop || true
 echo "version: '3.3'" > "$df"
 echo "services:" >> "$df"
 
+cat "agent.yml" >> "$df"
+
 for smith_target in "$@"; do
-  cat "agent.yml" >> "$df"
+  cat "smith.yml" >> "$df"
   sed -i "s/{{SMITH_TARGET}}/${smith_target}/g" "$df"
 done
 
