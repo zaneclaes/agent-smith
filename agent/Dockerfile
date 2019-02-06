@@ -105,7 +105,8 @@ RUN /root/Android/tools/bin/sdkmanager --update && \
     echo 'y' | /root/Android/tools/bin/sdkmanager "platforms;android-27" "build-tools;27.0.3" "extras;google;m2repository" "extras;android;m2repository" && \
     yes | /root/Android/tools/bin/sdkmanager --licenses
 
-ARG DOWNLOAD_URL="https://beta.unity3d.com/download/dad990bf2728/UnitySetup-2018.2.7f1"
+# ARG DOWNLOAD_URL="https://beta.unity3d.com/download/dad990bf2728/UnitySetup-2018.2.7f1"
+ARG DOWNLOAD_URL="https://beta.unity3d.com/download/6e9a27477296/UnitySetup-2018.3.0f2"
 
 RUN wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
     # compare sha1 if given
