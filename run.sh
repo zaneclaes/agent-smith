@@ -19,11 +19,19 @@ docker-compose stop || true
 echo "version: '3.3'" > "$df"
 echo "services:" >> "$df"
 
-cat "agent.yml" >> "$df"
+cat "docker-agent.yml" >> "$df"
 
 for smith_target in "$@"; do
-  cat "smith.yml" >> "$df"
-  sed -i "s/{{SMITH_TARGET}}/${smith_target}/g" "$df"
+  cat "docker-smith.yml" >> "$df"
+  sed -i.bak "s/{{SMITH_TARGET}}/${smith_target}/g" "$df"
+  # ss="${MG_SHR}/smith-${smith_target}"
+  # if [[ -d "$MG_SRC" ]]; then
+  # 	echo "Refreshing source code from ${MG_SRC}/unity to ${ss}..."
+  # 	rm -rf "${ss}"
+  # 	cp -r "${MG_SRC}/unity" "$ss"
+  # else
+  # 	echo "No source code; ${ss} will be unchanged."
+  # fi
 done
 
-docker-compose up --build
+docker-compose up --build 

@@ -30,3 +30,4 @@ fi
 #mkdir -p cache
 
 /bin/smith.sh
+cron &

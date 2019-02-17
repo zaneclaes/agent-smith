@@ -1,15 +1,10 @@
 #!/bin/bash
-
-if [[ -z "$SMITH_TARGET" ]]; then
-  echo "[Smith] no target; not starting Unity."
-  exit 0
-fi
-
-echo "[Smith] checking that Unity is running"
+# echo "[Smith] checking that Unity is running"
 running=$(ps -ef | grep "/opt/Unity/Editor/Unity" | grep -v "grep")
-echo "[Smith] Running? ${running}"
+# echo "[Smith] Running? ${running}"
+
 if [[ ! -z "$running" ]]; then
-  echo "[Smith] Unity is already running."
+  # echo "[Smith] Unity is already running."
   exit 0
 fi
 
@@ -19,7 +14,7 @@ rm -rf
 rm -rf "$lf"
 rm -rf "smith.lock" # In case the prior version did not shut down.
 rm -rf "smith.cmd" # In case the prior version did not shut down.
-echo "[Smith] Running as $(whoami) for ${SMITH_TARGET} in $(pwd) [$lf]"
+echo "[Smith] Starting Unity as $(whoami) in $(pwd) [$lf]"
 xvfb-run --auto-servernum --server-args='-screen 0 640x480x24' /opt/Unity/Editor/Unity \
   -nographics \
   -batchmode \

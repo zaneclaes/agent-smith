@@ -131,6 +131,11 @@ RUN wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
 # Clean up
 RUN rm -rf /tmp/* /var/tmp/*
 
+# Cron job to keep Smith alive
+ADD smith-cron /etc/cron.d/smith-cron
+RUN chmod 0644 /etc/cron.d/smith-cron
+RUN crontab /etc/cron.d/smith-cron
+
 # Hooks
 COPY ./hooks /etc/buildkite-agent/hooks
 RUN chmod -R +x /etc/buildkite-agent/hooks
@@ -140,5 +145,6 @@ COPY ./buildkite-agent.cfg /etc/buildkite-agent/buildkite-agent.cfg
 COPY ./docker-entrypoint.d /docker-entrypoint.d
 RUN chmod -R +x /docker-entrypoint.d
 
+# Smith run-script & cron job
 COPY ./smith.sh /bin/smith.sh
 RUN chmod +x /bin/smith.sh
