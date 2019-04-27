@@ -4,15 +4,11 @@ set -euo pipefail
 echo "BUILDKITE command: ${BUILDKITE_COMMAND:-}"
 echo "BUILDKITE path: ${BUILDKITE_BUILD_CHECKOUT_PATH:-}"
 echo "BUILDKITE smith target: $SMITH_TARGET, MG share: $MG_SHR"
+rc="${BUILDKITE_RETRY_COUNT:-0}"
+echo "BUILDKITE clean checkout: $rc"
 
-if [[ -z "$SMITH_TARGET" ]]; then
-	echo "[Smith] skipping (no target)"
-else
-	/bin/smith.sh
-	running=$(ps -ef | grep "/opt/Unity/Editor/Unity" | grep -v "grep")
-	echo "[Smith] Post-script running? ${running}"
-	if [ -z "$running" ]; then
-		echo "NOT RUNNING!"
-		exit 1
-	fi
+if [[ "$rc" != "0" ]]; then
+  echo "cleaning smith dir..."
+  rm -rf /smith/**
+  rm -rf /smith/.* 2> /dev/null || true
 fi

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-smith
+  labels:
+    app: agent-smith
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-smith
+  template:
+    metadata:
+      labels:
+        app: agent-smith
+    spec:
+      containers:
+      - name: agent-smith
+        image: inzania/agent:latest
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: mg-env
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mg-env
+              key: AWS_SECRET_ACCESS_KEY

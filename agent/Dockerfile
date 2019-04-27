@@ -131,11 +131,6 @@ RUN wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
 # Clean up
 RUN rm -rf /tmp/* /var/tmp/*
 
-# Cron job to keep Smith alive
-ADD smith-cron /etc/cron.d/smith-cron
-RUN chmod 0644 /etc/cron.d/smith-cron
-RUN crontab /etc/cron.d/smith-cron
-
 # Hooks
 COPY ./hooks /etc/buildkite-agent/hooks
 RUN chmod -R +x /etc/buildkite-agent/hooks

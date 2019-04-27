@@ -26,8 +26,7 @@ if [[ ! -f /root/.local/share/unity3d/Unity/Unity_lic.ulf ]]; then
   exit 1
 fi
 
+echo "[Smith] cleaning working directory."
+
 #mkdir -p work
 #mkdir -p cache
-
-/bin/smith.sh
-cron &
