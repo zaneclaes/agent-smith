@@ -1,13 +1,6 @@
 #!/bin/bash
 set -euo
-if [[ -z "$SMITH_TARGET" ]]; then
-  echo "[Smith] no target; not starting Unity."
-  exit 0
-fi
-
 echo "[Smith] start."
-
-cd /smith
 
 UNITY_LIC_ULF="${UNITY_LIC_ULF:-}"
 

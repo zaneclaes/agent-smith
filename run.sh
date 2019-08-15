@@ -1,37 +1,47 @@
 #!/usr/bin/env bash
+kubectl delete secret agent-smith
+kubectl create secret generic agent-smith \
+  --from-literal=buildkite-agent-token=${BUILDKITE_AGENT_TOKEN}
 
-if [[ -z "$MG_SHR" ]]; then
-  echo "No MG_SHR env var"
-  exit 1
-fi
+kubectl delete -f deployment.yaml
+docker build agent -t inzania/agent:latest &&
+docker push inzania/agent:latest &&
+kubectl apply -f deployment.yaml
+sleep 3
+kubectl get pods
 
-# # MG_SRC, MG_SHR, MG_ENV, SN
-# cat ./docker-compose.template > ./docker-compose.yml
-# fn="./docker-compose.yml"
-# smith=$(cat ./dockerfile-smith.template)
-# cp ./docker-compose.template $fn
-# echo "$smith" | sed "s/{SN}/1/"  >> $fn
+# if [[ -z "$MG_SHR" ]]; then
+#   echo "No MG_SHR env var"
+#   exit 1
+# fi
 
-df="docker-compose.yml"
+# # # MG_SRC, MG_SHR, MG_ENV, SN
+# # cat ./docker-compose.template > ./docker-compose.yml
+# # fn="./docker-compose.yml"
+# # smith=$(cat ./dockerfile-smith.template)
+# # cp ./docker-compose.template $fn
+# # echo "$smith" | sed "s/{SN}/1/"  >> $fn
 
-docker-compose stop || true
+# df="docker-compose.yml"
 
-echo "version: '3.3'" > "$df"
-echo "services:" >> "$df"
+# docker-compose stop || true
 
-cat "docker-agent.yml" >> "$df"
+# echo "version: '3.3'" > "$df"
+# echo "services:" >> "$df"
 
-for smith_target in "$@"; do
-  cat "docker-smith.yml" >> "$df"
-  sed -i.bak "s/{{SMITH_TARGET}}/${smith_target}/g" "$df"
-  # ss="${MG_SHR}/smith-${smith_target}"
-  # if [[ -d "$MG_SRC" ]]; then
-  # 	echo "Refreshing source code from ${MG_SRC}/unity to ${ss}..."
-  # 	rm -rf "${ss}"
-  # 	cp -r "${MG_SRC}/unity" "$ss"
-  # else
-  # 	echo "No source code; ${ss} will be unchanged."
-  # fi
-done
+# cat "docker-agent.yml" >> "$df"
 
-docker-compose up --build 
+# for smith_target in "$@"; do
+#   cat "docker-smith.yml" >> "$df"
+#   sed -i.bak "s/{{SMITH_TARGET}}/${smith_target}/g" "$df"
+#   # ss="${MG_SHR}/smith-${smith_target}"
+#   # if [[ -d "$MG_SRC" ]]; then
+#   # 	echo "Refreshing source code from ${MG_SRC}/unity to ${ss}..."
+#   # 	rm -rf "${ss}"
+#   # 	cp -r "${MG_SRC}/unity" "$ss"
+#   # else
+#   # 	echo "No source code; ${ss} will be unchanged."
+#   # fi
+# done
+
+# docker-compose up --build

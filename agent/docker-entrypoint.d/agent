@@ -3,13 +3,6 @@ set -euo
 echo "[Agent] start."
 
 src_id_rsa="/ss3/id_rsa"
-src_dckr="/ss3/docker-credential-ecr-login"
-
-atf="/ss3/buildkite_agent_token"
-if [[ ! -f $atf ]]; then # Not a buildkite agent; just running an op.
-  echo "[Agent] no agent token"
-  exit 2
-fi
 
 if [[ ! -d /root/.ssh ]]; then mkdir /root/.ssh; fi
 if [[ ! -f "$src_id_rsa" ]]; then #
@@ -19,32 +12,6 @@ fi
 cp "$src_id_rsa" /root/.ssh/id_rsa
 chmod 400 /root/.ssh/id_rsa
 
-if [[ ! -f "$src_dckr" ]]; then
-  echo "[Agent] no docker credentials at $src_dckr"
-  exit 4
-fi
-cp "$src_dckr" /usr/local/bin/docker-credential-ecr-login
-chmod 400 /usr/local/bin/docker-credential-ecr-login
-
-at=$(cat $atf)
-echo "[Agent] Configuring as BuildKite Agent"
-
-if [[ -z "$SMITH_TARGET" ]]; then
-  AGENT_NAME="agent"
-  AGENT_TAGS="queue=default,staging_env=${STAGING_ENV:-}"
-else
-  AGENT_NAME="smith-$SMITH_TARGET"
-  AGENT_TAGS="queue=default,smith_target=${SMITH_TARGET}"
-fi
-
-#if [[ ! -d /etc/buildkite-agent/ ]]; then mkdir /etc/buildkite-agent/; fi
-#cat /tmp/buildkite-agent.cfg >> /etc/buildkite-agent/buildkite-agent.cfg
-ba="/etc/buildkite-agent/buildkite-agent.cfg"
-sed -i "s/xxx/$at/g" "$ba"
-sed -i "s/{{SMITH_TARGET}}/${SMITH_TARGET}/g" "$ba"
-sed -i "s/{{NAME}}/${AGENT_NAME}/g" "$ba"
-sed -i "s/{{TAGS}}/${AGENT_TAGS}/g" "$ba"
-chmod +rwx "$ba"
 
 mkdir -p /buildkite/builds
 echo "[Agent] Hooks: $(ls /etc/buildkite-agent/hooks)"

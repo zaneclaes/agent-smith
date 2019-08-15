@@ -88,7 +88,7 @@ RUN apt-get update -qq; \
     xvfb \
     wget \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*    
+    && rm -rf /var/lib/apt/lists/*
 
 # Android Support: Add JDK & ADK
 # From: Command Line Tools Only: https://developer.android.com/studio/#downloads
@@ -106,7 +106,20 @@ RUN /root/Android/tools/bin/sdkmanager --update && \
     yes | /root/Android/tools/bin/sdkmanager --licenses
 
 # ARG DOWNLOAD_URL="https://beta.unity3d.com/download/dad990bf2728/UnitySetup-2018.2.7f1"
-ARG DOWNLOAD_URL="https://beta.unity3d.com/download/6e9a27477296/UnitySetup-2018.3.0f2"
+# https://public-cdn.cloud.unity3d.com/hub/prod/releases-linux.json
+# ARG DOWNLOAD_URL="https://beta.unity3d.com/download/6e9a27477296/UnitySetup-2018.3.0f2"
+ARG DOWNLOAD_URL="https://beta.unity3d.com/download/6fa9444d8a5d/LinuxEditorInstaller/Unity.tar.xz"
+
+# get available versions:
+# curl https://public-cdn.cloud.unity3d.com/hub/prod/releases-linux.json | jq ".[][].version"
+
+# Determine latest beta version
+# UNITY_BETA_VERSION=$(curl https://public-cdn.cloud.unity3d.com/hub/prod/releases-linux.json | jq ".beta[-1].version" | sed "s|\"||g")
+
+# get the specific UNITY_VERSION download URL:
+# curl https://public-cdn.cloud.unity3d.com/hub/prod/releases-linux.json | \
+#    jq ".[][] | select(.version == \"${UNITY_VERSION}\").downloadUrl" | \
+#    sed "s|LinuxEditorInstaller/Unity.tar.xz|UnitySetup-${UNITY_VERSION}|"
 
 RUN wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
     # compare sha1 if given
@@ -131,15 +144,16 @@ RUN wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
 # Clean up
 RUN rm -rf /tmp/* /var/tmp/*
 
-# Hooks
-COPY ./hooks /etc/buildkite-agent/hooks
+# Buildkite
+ADD ./buildkite-agent /etc/buildkite-agent
+RUN chmod +rwx /etc/buildkite-agent/buildkite-agent.cfg
 RUN chmod -R +x /etc/buildkite-agent/hooks
 
-# Agent config
-COPY ./buildkite-agent.cfg /etc/buildkite-agent/buildkite-agent.cfg
+# Docker entrypoint
 COPY ./docker-entrypoint.d /docker-entrypoint.d
 RUN chmod -R +x /docker-entrypoint.d
 
 # Smith run-script & cron job
-COPY ./smith.sh /bin/smith.sh
+ADD ./bin /bin
 RUN chmod +x /bin/smith.sh
+
