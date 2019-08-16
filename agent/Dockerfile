@@ -36,11 +36,18 @@ RUN git config --global core.sparseCheckout true # Faster, and also helps Window
 RUN apt-get install -y ruby-dev
 RUN gem install -n /usr/local/bin cocoapods
 
+ARG UNITY_VERSION
+ARG SHA1
+
 # FROM: https://forum.unity.com/threads/unity-on-linux-release-notes-and-known-issues.350256/page-2
 # Steal the SHA from "Linux Download Assistant"
 ARG COMPONENTS=Unity,Windows-Mono,Mac-Mono,WebGL,Android,iOS
 
-RUN apt-get update -qq; \
+ENV DEBIAN_FRONTEND noninteractive
+ENV DEBCONF_NONINTERACTIVE_SEEN true
+
+RUN echo "America/New_York" > /etc/timezone && \
+    apt-get update -qq; \
     apt-get install -qq -y \
     gconf-service \
     lib32gcc1 \
@@ -64,6 +71,7 @@ RUN apt-get update -qq; \
     libglu1-mesa \
     libgtk2.0-0 \
     libgtk3.0 \
+    libnotify4 \
     libnspr4 \
     libnss3 \
     libpango1.0-0 \
@@ -79,7 +87,9 @@ RUN apt-get update -qq; \
     libxrandr2 \
     libxrender1 \
     libxtst6 \
+    libunwind-dev \
     zlib1g \
+    pulseaudio \
     debconf \
     npm \
     xdg-utils \
@@ -87,41 +97,52 @@ RUN apt-get update -qq; \
     libpq5 \
     xvfb \
     wget \
+    locales \
+    software-properties-common \
+    unzip \
+    && add-apt-repository ppa:openjdk-r/ppa \
+    && add-apt-repository ppa:cwchien/gradle \
+    && apt-get install -qq -y \
+    gradle \
+    openjdk-8-jdk \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 
 # Android Support: Add JDK & ADK
 # From: Command Line Tools Only: https://developer.android.com/studio/#downloads
-RUN apt-get update && apt-get install -y software-properties-common
-RUN echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
-RUN echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections
-RUN add-apt-repository ppa:webupd8team/java && apt-get update && yes | apt-get install -y oracle-java8-installer
-RUN apt-get update && apt-get install -y zip unzip lib32ncurses5 lib32stdc++6
-RUN wget -O android-sdk.zip https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
-RUN unzip android-sdk.zip -d /root/Android
-RUN chmod -R +xr /root/Android/
-RUN mkdir /root/.android || true && touch /root/.android/repositories.cfg
-RUN /root/Android/tools/bin/sdkmanager --update && \
-    echo 'y' | /root/Android/tools/bin/sdkmanager "platforms;android-27" "build-tools;27.0.3" "extras;google;m2repository" "extras;android;m2repository" && \
-    yes | /root/Android/tools/bin/sdkmanager --licenses
 
-# ARG DOWNLOAD_URL="https://beta.unity3d.com/download/dad990bf2728/UnitySetup-2018.2.7f1"
-# https://public-cdn.cloud.unity3d.com/hub/prod/releases-linux.json
-# ARG DOWNLOAD_URL="https://beta.unity3d.com/download/6e9a27477296/UnitySetup-2018.3.0f2"
-ARG DOWNLOAD_URL="https://beta.unity3d.com/download/6fa9444d8a5d/LinuxEditorInstaller/Unity.tar.xz"
+ENV ANDROID_SDK_VERSION ${ANDROID_SDK_VERSION:-28}
+ENV ANDROID_SDK_COMPONENTS platforms;android-$ANDROID_SDK_VERSION
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/jre/
+ENV PATH ${PATH}:/usr/lib/jvm/java-8-openjdk-amd64/jre/bin
+ENV ANDROID_HOME /opt/android-sdk-linux
 
-# get available versions:
-# curl https://public-cdn.cloud.unity3d.com/hub/prod/releases-linux.json | jq ".[][].version"
+ENV PATH ${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
+ENV LANG en_US.UTF-8
 
-# Determine latest beta version
-# UNITY_BETA_VERSION=$(curl https://public-cdn.cloud.unity3d.com/hub/prod/releases-linux.json | jq ".beta[-1].version" | sed "s|\"||g")
+# Install Android SDK Installer...
+RUN cd /opt && \
+    wget -q https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip -O android-sdk.zip && \
+    unzip -q android-sdk.zip -d android-sdk-linux && \
+    rm -f android-sdk.zip && \
+    ls -ahl android-sdk-linux
 
-# get the specific UNITY_VERSION download URL:
-# curl https://public-cdn.cloud.unity3d.com/hub/prod/releases-linux.json | \
-#    jq ".[][] | select(.version == \"${UNITY_VERSION}\").downloadUrl" | \
-#    sed "s|LinuxEditorInstaller/Unity.tar.xz|UnitySetup-${UNITY_VERSION}|"
+RUN chmod -R 755 .${ANDROID_HOME}/tools/*
 
-RUN wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
+# Install Android SDK
+RUN ${ANDROID_HOME}/tools/bin/sdkmanager ${ANDROID_SDK_COMPONENTS}
+
+# accept license
+RUN yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses
+
+RUN gradle -v
+
+RUN DOWNLOAD_URL=$(curl https://public-cdn.cloud.unity3d.com/hub/prod/releases-linux.json | \
+    jq ".[][] | select(.version == \"${UNITY_VERSION}\").downloadUrl" | \
+    sed "s|LinuxEditorInstaller/Unity.tar.xz|UnitySetup-${UNITY_VERSION}|" | sed "s|\"||g") && \
+    wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
+    echo "GOT download!!" && \
     # compare sha1 if given
     if [ -n "${SHA1}" -a "${SHA1}" != "" ]; then \
      echo "${SHA1}  UnitySetup" | shasum -a 1 --check -; \
@@ -133,21 +154,26 @@ RUN wget -nv ${DOWNLOAD_URL} -O UnitySetup && \
     # agree with license
     echo y | \
     # install unity with required components
-    ./UnitySetup --unattended \
+    ./UnitySetup \
+    --unattended \
     --install-location=/opt/Unity \
     --verbose \
     --download-location=/tmp/unity \
     --components=$COMPONENTS && \
-    # remove setup
-    rm UnitySetup
-
-# Clean up
-RUN rm -rf /tmp/* /var/tmp/*
+    # make a directory for the certificate Unity needs to run
+    mkdir -p /root/.local/share/unity3d/Certificates/ && \
+    # remove setup & temp files
+    rm UnitySetup && \
+    rm -rf /tmp/unity && \
+    rm -rf /root/.local/share/Trash/* && \
+    # android specific paths
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /tmp/* && \
+    rm -rf /var/tmp/*
 
 # Buildkite
 ADD ./buildkite-agent /etc/buildkite-agent
 RUN chmod +rwx /etc/buildkite-agent/buildkite-agent.cfg
-RUN chmod -R +x /etc/buildkite-agent/hooks
 
 # Docker entrypoint
 COPY ./docker-entrypoint.d /docker-entrypoint.d
