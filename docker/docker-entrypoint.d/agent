@@ -3,15 +3,15 @@ set -euo
 echo "[Agent] start."
 
 src_id_rsa="/ss3/id_rsa"
+dst_ssh=".ssh"
 
-if [[ ! -d /root/.ssh ]]; then mkdir /root/.ssh; fi
+if [[ ! -d "$dst_ssh" ]]; then mkdir "$dst_ssh"; fi
 if [[ ! -f "$src_id_rsa" ]]; then #
-  echo "[Agent] no agent id_rsa at $src_id_rsa; SSH contents: $(ls /root/ssh)"
+  echo "[Agent] no agent id_rsa at $src_id_rsa"
   exit 3
 fi
-cp "$src_id_rsa" /root/.ssh/id_rsa
-chmod 400 /root/.ssh/id_rsa
-
+cp "$src_id_rsa" "${dst_ssh}/id_rsa"
+chmod 400 "${dst_ssh}/id_rsa"
 
 mkdir -p /buildkite/builds
 echo "[Agent] Hooks: $(ls /etc/buildkite-agent/hooks)"

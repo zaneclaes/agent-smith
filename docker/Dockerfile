@@ -4,8 +4,8 @@ USER root
 
 # BUILDPIPE
 # https://github.com/ksindi/buildpipe
-RUN apt-get update && apt-get install -y python3 python3-pip
-RUN pip3 install buildpipe awscli
+RUN apt-get -y update && apt-get -y upgrade && apt-get install -y python3 python3-pip
+RUN pip3 install buildpipe awscli pyyaml
 
 # BAZEL
 # https://docs.bazel.build/versions/master/install-ubuntu.html
@@ -171,6 +171,11 @@ RUN DOWNLOAD_URL=$(curl https://public-cdn.cloud.unity3d.com/hub/prod/releases-l
     rm -rf /tmp/* && \
     rm -rf /var/tmp/*
 
+# Ensure Python 3.7
+RUN apt-get -y update && apt-get -y upgrade && apt-get install -y python3.7
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
+RUN pip3 install pyyaml awscli
+
 # Buildkite
 ADD ./buildkite-agent /etc/buildkite-agent
 RUN chmod +rwx /etc/buildkite-agent/buildkite-agent.cfg
@@ -182,4 +187,12 @@ RUN chmod -R +x /docker-entrypoint.d
 # Smith run-script & cron job
 ADD ./bin /bin
 RUN chmod +x /bin/smith.sh
+
+# Add the buildkite-agent user, which will be used during builds
+RUN useradd buildkite-agent && \
+    echo "buildkite-agent:buildkite-agent" | chpasswd && \
+    mkdir -p /home/buildkite-agent && chown -R buildkite-agent:buildkite-agent /home/buildkite-agent
+RUN chown -R buildkite-agent:buildkite-agent /opt/Unity
+USER buildkite-agent
+WORKDIR /home/buildkite-agent
 

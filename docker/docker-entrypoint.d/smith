@@ -4,17 +4,19 @@ echo "[Smith] start."
 
 UNITY_LIC_ULF="${UNITY_LIC_ULF:-}"
 
-mkdir -p /root/.cache/unity3d
-mkdir -p /root/.local/share/unity3d/Unity/
+local_dir=".local"
+lic_file="${local_dir}/share/unity3d/Unity/Unity_lic.ulf"
+mkdir -p ".cache/unity3d"
+mkdir -p "${local_dir}/share/unity3d/Unity/"
 
 if [[ ! -z "$UNITY_LIC_ULF" ]]; then
-  echo "$UNITY_LIC_ULF" > /root/.local/share/unity3d/Unity/Unity_lic.ulf
+  echo "$UNITY_LIC_ULF" > "${lic_file}"
 elif [[ -f /ss3/unity.ulf ]]; then
   echo "[Smith] Copying license from SS3"
-  cat /ss3/unity.ulf | tr -d '\r' > /root/.local/share/unity3d/Unity/Unity_lic.ulf
+  cat /ss3/unity.ulf | tr -d '\r' > "${lic_file}"
 fi
 
-if [[ ! -f /root/.local/share/unity3d/Unity/Unity_lic.ulf ]]; then
+if [[ ! -f "${lic_file}" ]]; then
   echo "[Smith] No licence file!"
   exit 1
 fi
